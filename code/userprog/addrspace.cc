@@ -67,6 +67,7 @@ SwapHeader (NoffHeader *noffH)
 
 AddrSpace::AddrSpace()
 {
+    //bool PhyPages[NumPhysPages] = {FALSE};
     /*
     pageTable = new TranslationEntry[NumPhysPages];
     for (int i = 0; i < NumPhysPages; i++) {
@@ -91,7 +92,7 @@ AddrSpace::AddrSpace()
 AddrSpace::~AddrSpace()
 {
     for(int i = 0; i < numPages; i++) {
-        AddrSpace::PhyPage[pageTable[i].physicalPage] = FALSE;
+        AddrSpace::PhyPages[pageTable[i].physicalPage] = FALSE;
     }
 
     delete pageTable;
@@ -107,6 +108,8 @@ AddrSpace::~AddrSpace()
 //
 //	"fileName" is the file containing the object code to load into memory
 //----------------------------------------------------------------------
+
+bool AddrSpace::PhyPages[NumPhysPages] = {FALSE};
 
 bool 
 AddrSpace::Load(char *fileName) 
@@ -147,19 +150,20 @@ AddrSpace::Load(char *fileName)
 						// virtual memory
 
     DEBUG(dbgAddr, "Initializing address space: " << numPages << ", " << size);
-
+    //bool AddrSpace::PhyPages[NumPhysPages]={FALSE};
     int j;
-    pageTable = new TranslationEntry[NumPhysPages];
-    for (int i = 0, j = 0; i < NumPhysPages; i++) {
+    pageTable = new TranslationEntry[numPages];
+    for (int i = 0, j = 0; i < numPages; i++) {
         pageTable[i].virtualPage = i;
-        while(j<NumPhysPages && AddrSpace::PhyPage[j]==TRUE)
+        while(j<NumPhysPages && AddrSpace::PhyPages[j]==TRUE)
             j++;
-        AddrSpace::PhyPage[j] = TRUE;
+        AddrSpace::PhyPages[j] = TRUE;
         pageTable[i].physicalPage = j;
         pageTable[i].valid = TRUE;
         pageTable[i].use = FALSE;
         pageTable[i].dirty = FALSE;
         pageTable[i].readOnly = FALSE;  
+        cerr << "Allocated " << i << " to " << j << endl;
     }
 
 // then, copy in the code and data segments into memory
