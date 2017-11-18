@@ -109,7 +109,7 @@ AddrSpace::~AddrSpace()
 //	"fileName" is the file containing the object code to load into memory
 //----------------------------------------------------------------------
 
-bool AddrSpace::PhyPages[NumPhysPages] = {FALSE};
+bool AddrSpace::PhyPages[NumPhysPages];
 
 bool 
 AddrSpace::Load(char *fileName) 
@@ -163,7 +163,6 @@ AddrSpace::Load(char *fileName)
         pageTable[i].use = FALSE;
         pageTable[i].dirty = FALSE;
         pageTable[i].readOnly = FALSE;  
-        cerr << "Allocated " << i << " to " << j << endl;
     }
 
 // then, copy in the code and data segments into memory
@@ -172,15 +171,15 @@ AddrSpace::Load(char *fileName)
         DEBUG(dbgAddr, "Initializing code segment.");
 	DEBUG(dbgAddr, noffH.code.virtualAddr << ", " << noffH.code.size);
         executable->ReadAt(
-		&(kernel->machine->mainMemory[noffH.code.virtualAddr]), 
+		&(kernel->machine->mainMemory[pageTable[noffH.code.virtualAddr/PageSize].physicalPage*PageSize + noffH.code.virtualAddr%PageSize]), 
 			noffH.code.size, noffH.code.inFileAddr);
     }
     if (noffH.initData.size > 0) {
         DEBUG(dbgAddr, "Initializing data segment.");
 	DEBUG(dbgAddr, noffH.initData.virtualAddr << ", " << noffH.initData.size);
         executable->ReadAt(
-		&(kernel->machine->mainMemory[noffH.initData.virtualAddr]),
-			noffH.initData.size, noffH.initData.inFileAddr);
+		&(kernel->machine->mainMemory[pageTable[noffH.code.virtualAddr/PageSize].physicalPage*PageSize + noffH.code.virtualAddr%PageSize]), 
+			noffH.code.size, noffH.code.inFileAddr);
     }
 
 #ifdef RDATA
@@ -188,8 +187,8 @@ AddrSpace::Load(char *fileName)
         DEBUG(dbgAddr, "Initializing read only data segment.");
 	DEBUG(dbgAddr, noffH.readonlyData.virtualAddr << ", " << noffH.readonlyData.size);
         executable->ReadAt(
-		&(kernel->machine->mainMemory[noffH.readonlyData.virtualAddr]),
-			noffH.readonlyData.size, noffH.readonlyData.inFileAddr);
+		&(kernel->machine->mainMemory[pageTable[noffH.code.virtualAddr/PageSize].physicalPage*PageSize + noffH.code.virtualAddr%PageSize]), 
+			noffH.code.size, noffH.code.inFileAddr);
     }
 #endif
 
